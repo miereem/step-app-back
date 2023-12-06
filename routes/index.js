@@ -4,7 +4,10 @@ const {Sequelize} = require("sequelize");
 const User = require("../models/User");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const Place = require("../models/Place")
 const cookieParser = require('cookie-parser');
+const multer = require('multer');
+const fs = require('fs');
 
 
 const sequelize = new Sequelize('postgres://s343056:a8x3u3Xyid768O1I@localhost:8933/studs');
@@ -15,7 +18,8 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 
 const app = express();
 app.use(express.json());
-app.use(cookieParser())
+app.use(cookieParser());
+app.use('/uploads', express.static('/Users/home/step-app/api/uploads'));
 
 app.use(cors({
   credentials: true,
@@ -85,6 +89,55 @@ app.get('/profile',  (req, res) =>
 
 });
 
+app.post('/logout', (req, res) => {
+    res.cookie('token', '').json(true);
+})
+
+const PhotosMiddleWare = multer({dest:'../uploads/'});
+app.post('/upload', PhotosMiddleWare.array('photos', 100), (req, res) => {
+    const uploadedFiles = [];
+    for(let i = 0; i < req.files.length; i++) {
+        const {path, originalname} = req.files[i];
+        const parts = originalname.split('.');
+        const newPath = path + '.' + parts[parts.length-1];
+        fs.renameSync(path, newPath);
+        uploadedFiles.push(newPath.replace('../uploads/',''));
+    }
+    console.log(uploadedFiles);
+    res.json(uploadedFiles);
+})
+
+app.post('/places', (req, res) => {
+    const {token} = req.cookies;
+    const {title, address, addedPhotos, opensAt, closesAt, description} = req.body;
+    jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+        if (err) throw err;
+        await Place.sync();
+        const placeDoc = await Place.create({
+            owner:userData.id,
+            title: title, address, photos:addedPhotos,
+            opensAt, closesAt, description
+        });
+        res.json(placeDoc);
+    });
+});
+
+app.get('/places', (req, res) => {
+    //sequelize.authenticate();
+    const {token} = req.cookies;
+    jwt.verify(token, jwtSecret, {}, async (err, userData) => {
+        const {id} = userData;
+        const resp = await Place.findAll({where: {owner:id}});
+        res.json(resp);
+
+    });
+})
+
+
+app.get('/api/places/:id', async (req,res) => {
+    const {id} = req.params;
+    res.json(await Place.findByPk(id));
+});
 
 app.listen(3000, () => { console.log('Server running on port 3000');});
 

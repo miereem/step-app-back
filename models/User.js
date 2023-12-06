@@ -1,5 +1,5 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = new Sequelize('postgres://s343056:a8x3u3Xyid768O1I@localhost:8932/studs');
+const sequelize = new Sequelize('postgres://s343056:a8x3u3Xyid768O1I@localhost:8933/studs');
 
 const User = sequelize.define('User', {
     name: DataTypes.STRING,
