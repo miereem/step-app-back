@@ -8,8 +8,8 @@ const Place = sequelize.define('Place', {
     address: DataTypes.STRING,
     photos: DataTypes.ARRAY(DataTypes.STRING),
     description: DataTypes.STRING,
-    openingTime: DataTypes.TIME,
-    closingTime: DataTypes.TIME,
+    openingTime: DataTypes.STRING,
+    closingTime: DataTypes.STRING,
     //category: DataTypes.NUMBER,
 });
 
