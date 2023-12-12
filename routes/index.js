@@ -19,7 +19,7 @@ const bcryptSalt = bcrypt.genSaltSync(10);
 const app = express();
 app.use(express.json());
 app.use(cookieParser());
-app.use('/uploads', express.static('/Users/home/step-app/api/uploads'));
+app.use('/uploads', express.static('/Users/home/step-app/uploads'));
 
 app.use(cors({
   credentials: true,
@@ -80,7 +80,7 @@ app.get('/profile',  (req, res) =>
     if(token) {
         jwt.verify(token, jwtSecret, {}, async (err, user) => {
             if(err) throw err;
-            const {name, email, username, id} = await User.findByPk(user.id);
+            const {name, email, username, id} = await User.findByPk(user.username);
             res.json({name, email, username, id});
         });
     } else {
@@ -114,7 +114,7 @@ app.post('/places', (req, res) => {
         if (err) throw err;
         await Place.sync();
         const placeDoc = await Place.create({
-            owner:userData.id,
+            owner:userData.username,
             title: title, address, photos:addedPhotos,
             openingTime:opensAt, closingTime:closesAt, description
         });
@@ -126,12 +126,13 @@ app.get('/user-places', (req, res) => {
     //sequelize.authenticate();
     const {token} = req.cookies;
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
-        const {id} = userData;
-        const resp = await Place.findAll({where: {owner:id}});
+        const {username} = userData;
+        const resp = await Place.findAll({where: {owner:username}});
         res.json(resp);
 
     });
 })
+
 
 
 app.get('/places/:id', async (req,res) => {
@@ -144,7 +145,7 @@ app.put('/places', async (req, res) =>{
     const {id, title, address, addedPhotos, opensAt, closesAt, description} = req.body;
     jwt.verify(token, jwtSecret, {}, async (err, userData) => {
         const placeDoc = await Place.findByPk(id);
-        if (userData.id === placeDoc.owner) {
+        if (userData.username === placeDoc.owner) {
             placeDoc.set({
                 title:title, address:address, photos: addedPhotos, openingTime:opensAt, closingTime:closesAt, description:description
             });
